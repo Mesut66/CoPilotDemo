@@ -1,0 +1,42 @@
+﻿@model IEnumerable<CoPilotDemo_VS.Models.Product>
+
+@{
+    ViewData["Title"] = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h1>Index</h1>
+
+<p>
+    <a asp-action="Create" class="btn btn-primary">
+        <i class="bi bi-plus-lg" aria-hidden="true"></i>
+        <span class="visually-hidden">Create New</span>
+        Create New
+    </a>
+</p>
+
+<!-- place antiforgery token on the page so AJAX can read it -->
+<form id="antiforgeryForm" style="display:none;">
+    @Html.AntiForgeryToken()
+</form>
+
+<table id="productsTable" class="table display"
+       data-ajax-url="@Url.Action("GetProducts", "Products")"
+       data-delete-url="@Url.Action("DeleteConfirmedAjax", "Products")">
+    <thead>
+        <tr>
+            <th>@Html.DisplayNameFor(model => model.Name)</th>
+            <th>@Html.DisplayNameFor(model => model.Price)</th>
+            <th>@Html.DisplayNameFor(model => model.Color)</th>
+            <th>@Html.DisplayNameFor(model => model.Category)</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+    </tbody>
+</table>
+
+@section Scripts {
+   <script src="~/js/products.js"></script>
+
+}
