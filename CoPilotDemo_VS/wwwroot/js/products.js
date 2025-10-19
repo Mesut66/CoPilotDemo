@@ -61,12 +61,12 @@
         // expose function for compatibility if needed
         window.confirmDelete = function (id) {
             Swal.fire({
-                title: 'Delete product',
-                text: 'This action cannot be undone. Do you want to continue?',
+                title: 'Ürünü sil',
+                text: 'Bu işlem geri alınamaz. Devam etmek istiyor musunuz?',
                 icon: 'warning',
                 showCancelButton: true,
-                confirmButtonText: 'Yes, delete it',
-                cancelButtonText: 'Cancel',
+                confirmButtonText: 'Evet, sil',
+                cancelButtonText: 'İptal',
                 focusCancel: true,
                 reverseButtons: true
             }).then(function (result) {
@@ -81,19 +81,19 @@
                     success: function (res) {
                         if (res && res.success) {
                             Swal.fire({
-                                title: 'Deleted!',
-                                text: 'Product has been deleted.',
+                                title: 'Silindi!',
+                                text: 'Ürün başarıyla silindi.',
                                 icon: 'success',
                                 timer: 1500,
                                 showConfirmButton: false
                             });
                             table.ajax.reload(null, false);
                         } else {
-                            Swal.fire('Error', res && res.message ? res.message : 'Delete failed.', 'error');
+                            Swal.fire('Hata', res && res.message ? res.message : 'Silme işlemi başarısız oldu.', 'error');
                         }
                     },
                     error: function () {
-                        Swal.fire('Error', 'An error occurred while deleting the product.', 'error');
+                        Swal.fire('Hata', 'Ürün silinirken bir hata oluştu.', 'error');
                     }
                 });
             });
