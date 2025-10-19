@@ -1,56 +1,63 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using CoPilotDemo_VS.Data;
 using CoPilotDemo_VS.Models;
-using CoPilotDemo_VS.Service;
 
 namespace CoPilotDemo_VS.Controllers
 {
     public class ProductsController : Controller
     {
-        private readonly ProductRepository _repo;
+        private readonly ApplicationDbContext _context;
 
-        public ProductsController(ProductRepository repo)
+        public ProductsController(ApplicationDbContext context)
         {
-            _repo = repo;
+            _context = context;
         }
 
         // GET: Products
         public async Task<IActionResult> Index()
         {
-            var products = await _repo.GetAllProductsAsync();
-            return View(products);
+            return View(await _context.Product.ToListAsync());
         }
 
         // GET: Products/GetProducts
-        // Returns JSON in DataTables-friendly shape: { data: [ ... ] }
+        // DataTables expects JSON in the form: { data: [ ... ] }
         [HttpGet]
         public async Task<IActionResult> GetProducts()
         {
-            var products = await _repo.GetAllProductsAsync();
-            var dto = products.Select(p => new
-            {
-                id = p.Id,
-                name = p.Name,
-                price = p.Price,
-                color = p.Color,
-                category = p.Category
-            }).ToList();
+            var products = await _context.Product
+                .Select(p => new
+                {
+                    id = p.Id,
+                    name = p.Name,
+                    price = p.Price,
+                    color = p.Color,
+                    category = p.Category
+                })
+                .ToListAsync();
 
-            return Json(new { data = dto });
+            return Json(new { data = products });
         }
 
         // GET: Products/Details/5
         public async Task<IActionResult> Details(int? id)
         {
-            if (id == null) return NotFound();
+            if (id == null)
+            {
+                return NotFound();
+            }
 
-            var product = await _repo.GetProductByIdAsync(id.Value);
-            if (product == null) return NotFound();
+            var product = await _context.Product
+                .FirstOrDefaultAsync(m => m.Id == id);
+            if (product == null)
+            {
+                return NotFound();
+            }
 
             return View(product);
         }
@@ -62,13 +69,16 @@ namespace CoPilotDemo_VS.Controllers
         }
 
         // POST: Products/Create
+        // To protect from overposting attacks, enable the specific properties you want to bind to.
+        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,Name,Price,Color,Category")] Product product)
         {
             if (ModelState.IsValid)
             {
-                await _repo.AddProductAsync(product);
+                _context.Add(product);
+                await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
             return View(product);
@@ -77,29 +87,41 @@ namespace CoPilotDemo_VS.Controllers
         // GET: Products/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
-            if (id == null) return NotFound();
+            if (id == null)
+            {
+                return NotFound();
+            }
 
-            var product = await _repo.GetProductByIdAsync(id.Value);
-            if (product == null) return NotFound();
+            var product = await _context.Product.FindAsync(id);
+            if (product == null)
+            {
+                return NotFound();
+            }
             return View(product);
         }
 
         // POST: Products/Edit/5
+        // To protect from overposting attacks, enable the specific properties you want to bind to.
+        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Price,Color,Category")] Product product)
         {
-            if (id != product.Id) return NotFound();
+            if (id != product.Id)
+            {
+                return NotFound();
+            }
 
             if (ModelState.IsValid)
             {
                 try
                 {
-                    await _repo.UpdateProductAsync(product);
+                    _context.Update(product);
+                    await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!await ProductExists(product.Id))
+                    if (!ProductExists(product.Id))
                     {
                         return NotFound();
                     }
@@ -116,10 +138,17 @@ namespace CoPilotDemo_VS.Controllers
         // GET: Products/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
-            if (id == null) return NotFound();
+            if (id == null)
+            {
+                return NotFound();
+            }
 
-            var product = await _repo.GetProductByIdAsync(id.Value);
-            if (product == null) return NotFound();
+            var product = await _context.Product
+                .FirstOrDefaultAsync(m => m.Id == id);
+            if (product == null)
+            {
+                return NotFound();
+            }
 
             return View(product);
         }
@@ -129,7 +158,13 @@ namespace CoPilotDemo_VS.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            await _repo.DeleteProductAsync(id);
+            var product = await _context.Product.FindAsync(id);
+            if (product != null)
+            {
+                _context.Product.Remove(product);
+            }
+
+            await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
@@ -139,7 +174,7 @@ namespace CoPilotDemo_VS.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmedAjax(int id)
         {
-            var product = await _repo.GetProductByIdAsync(id);
+            var product = await _context.Product.FindAsync(id);
             if (product == null)
             {
                 return Json(new { success = false, message = "Product not found." });
@@ -147,7 +182,8 @@ namespace CoPilotDemo_VS.Controllers
 
             try
             {
-                await _repo.DeleteProductAsync(id);
+                _context.Product.Remove(product);
+                await _context.SaveChangesAsync();
                 return Json(new { success = true });
             }
             catch (Exception ex)
@@ -156,9 +192,9 @@ namespace CoPilotDemo_VS.Controllers
             }
         }
 
-        private async Task<bool> ProductExists(int id)
+        private bool ProductExists(int id)
         {
-            return (await _repo.GetProductByIdAsync(id)) != null;
+            return _context.Product.Any(e => e.Id == id);
         }
     }
 }
