@@ -32,7 +32,24 @@
             searching: true,
             ordering: true,
             responsive: true,
-            order: [[0, 'asc']]
+            order: [[0, 'asc']],
+            language: {
+                decimal: ",",
+                thousands: ".",
+                info: "Gösterilen _START_ - _END_ / _TOTAL_ kayıt",
+                infoEmpty: "Gösterilen 0 - 0 / 0 kayıt",
+                lengthMenu: "Sayfa başına _MENU_ kayıt",
+                search: "Ara:",
+                paginate: {
+                    first: "İlk",
+                    previous: "Önceki",
+                    next: "Sonraki",
+                    last: "Son"
+                },
+                zeroRecords: "Eşleşen kayıt bulunamadı",
+                loadingRecords: "Yükleniyor...",
+                processing: "İşleniyor..."
+            }
         });
 
         // event delegation for delete buttons
